@@ -18,7 +18,7 @@ import com.esiea.ecommerceapi.transformer.category.CategoryFull;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
-@RequestMapping("api/private")
+@RequestMapping("api/private/category")
 public class CategoryController {
 
 	@Autowired
@@ -27,12 +27,12 @@ public class CategoryController {
 	@Autowired
 	private ProductService productService;
 	
-	@GetMapping("/category")
+	@GetMapping("")
 	public List<CategoryFull> getCategories() {
 		return categoryService.getCategories();
 	}
 	
-	@PostMapping("/category/{idCategory}/{idProduct}")
+	@PostMapping("/{idCategory}/{idProduct}")
 	public void addProductToCategory(
 			@PathVariable(name = "idCategory") Integer idCategory,
 			@PathVariable(name = "idProduct") Integer idProduct) {

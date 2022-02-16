@@ -16,24 +16,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.esiea.ecommerceapi.model.Product;
+import com.esiea.ecommerceapi.service.NotAllowedException;
 import com.esiea.ecommerceapi.service.NotFoundException;
 import com.esiea.ecommerceapi.service.ProductService;
 import com.esiea.ecommerceapi.transformer.product.ProductFull;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
-@RequestMapping("api/private")
+@RequestMapping("api/private/product")
 public class ProductController {
 
 	@Autowired
 	private ProductService productService;
-	
-	@GetMapping("/product")
+
+	@GetMapping("")
 	public List<ProductFull> getProducts() {
 		return productService.getProducts();
 	}
 
-	@GetMapping("/product/{id}")
+	@GetMapping("/{id}")
 	public ResponseEntity<ProductFull> getProduct(@PathVariable("id") Integer id) {
 		try {
 			ProductFull p = productService.getProduct(id);
@@ -43,22 +44,37 @@ public class ProductController {
 		}
 	}
 
-	@PostMapping("/product")
-	public ProductFull addProduct(@RequestBody Product product) {
-		return productService.upsert(product);
+	@PostMapping("")
+	public ResponseEntity<ProductFull> addProduct(@RequestBody Product product) {
+		try {
+			ProductFull productF = productService.create(product);
+			return new ResponseEntity<>(productF, HttpStatus.OK);
+		} catch (NotAllowedException e) {
+			return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+		}
 	}
 
-	@DeleteMapping("/product/{id}")
-	public void deleteProduct(@PathVariable("id") Integer id) {
-		productService.deleteProduct(id);
+	@DeleteMapping("/{id}")
+	public ResponseEntity<String> deleteProduct(@PathVariable("id") Integer id) {
+		try {
+			productService.deleteProduct(id);
+			return new ResponseEntity<>(HttpStatus.OK);
+		} catch (NotFoundException e) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 	}
 
-	@PutMapping("/product")
-	public ProductFull replaceProduct(@RequestBody Product product) {
-		return productService.upsert(product);
+	@PutMapping("")
+	public ResponseEntity<ProductFull> replaceProduct(@RequestBody Product product) {
+		try {
+			ProductFull productF =  productService.update(product);
+			return new ResponseEntity<ProductFull>(productF, HttpStatus.OK);
+		} catch (NotFoundException e) {
+			return new ResponseEntity<ProductFull>(HttpStatus.NOT_FOUND);
+		}
 	}
 
-	@PatchMapping("/product")
+	@PatchMapping("")
 	public ResponseEntity<ProductFull> partialReplaceProduct(@RequestBody Product product) {
 		try {
 			ProductFull existingProduct = productService.getProduct(product.getId());
@@ -72,16 +88,21 @@ public class ProductController {
 			if (product.getCost() != null && !product.getCost().equals(existingProduct.getCost())) {
 				existingProduct.setCost(product.getCost());
 			}
-			existingProduct = productService.upsert(existingProduct);
+			existingProduct = productService.update(existingProduct);
 			return new ResponseEntity<ProductFull>(existingProduct, HttpStatus.OK);
 		} catch (NotFoundException e) {
 			return new ResponseEntity<ProductFull>(HttpStatus.NOT_FOUND);
 		}
 	}
 
-	@GetMapping("/product/filter/{name}")
-	public Iterable<ProductFull> getProductsByName(@PathVariable("name") String name) {
-		return productService.getProductsByName(name);
+	@GetMapping("/name/{name}")
+	public ResponseEntity<Iterable<ProductFull>> getProductsByName(@PathVariable("name") String name) {
+		try {
+			Iterable<ProductFull> products = productService.getProductsByName(name);
+			return new ResponseEntity<Iterable<ProductFull>>(products, HttpStatus.OK);
+		} catch (NotFoundException e) {
+			return new ResponseEntity<Iterable<ProductFull>>(HttpStatus.NOT_FOUND);
+		}
 	}
 
 }
